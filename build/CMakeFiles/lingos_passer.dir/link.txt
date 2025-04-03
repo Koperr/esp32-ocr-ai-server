@@ -1,0 +1,1 @@
+/usr/bin/cc  -Wall -Werror -std=c11 CMakeFiles/lingos_passer.dir/src/main.c.o -o /home/beza/Desktop/Projects/tesseractocr_server/bin/Linux/lingos_passer  /usr/lib/x86_64-linux-gnu/libmicrohttpd.a /usr/local/lib/libhttpserver.a -lmicrohttpd -lhttpserver /usr/lib/x86_64-linux-gnu/libcurl.so 
