@@ -1,0 +1,4 @@
+bin/
+build/
+myenv/
+ocr_output.txt
