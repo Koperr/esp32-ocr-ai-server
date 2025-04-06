@@ -6,16 +6,17 @@
 #include "oled_display.h"
 
 
-
 // ===========================
 // Enter your WiFi credentials
 // ===========================
-const char* ssid     = "****";
-const char* password = "****";
+const char* ssid     = "speleo2";
+const char* password = "***";
 
 AsyncWebServer server(80); // Tworzenie serwera na porcie 80
 
 // Funkcja, która obsługuje obraz kamery
+
+// curl http://192.168.0.14/jpg --output obraz1.jpg
 
 void startCameraServer() {
   server.on("/jpg", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -25,15 +26,18 @@ void startCameraServer() {
       camera_fb_t *fb = esp_camera_fb_get();
       esp_camera_fb_return(fb);
     }
-
     camera_fb_t *fb = esp_camera_fb_get();
+    delay(200);
     if (!fb) {
         request->send(500, "text/plain", "Camera error");
         return;
     }
     // Ustaw nagłówek Content-Length
     AsyncWebServerResponse *response = request->beginResponse_P(200, "image/jpeg", fb->buf, fb->len);
+    response->addHeader("Content-Type", "image/jpeg");
     response->addHeader("Content-Length", String(fb->len));
+    response->addHeader("Cache-Control", "no-store");
+    response->addHeader("Connection", "close");
     request->send(response);
     esp_camera_fb_return(fb);
 });
@@ -47,7 +51,21 @@ void setup() {
   Serial.println();
 
 
-  // I2C
+  // CAMERA
+  camera_config_t camera_config;
+  setup_camera(camera_config);
+
+  if(psramFound()){
+    Serial.println("PSRAM Found: ");
+    Serial.println(ESP.getFreePsram());
+  } else {
+    // Limit the frame size when PSRAM is not available
+    Serial.println("PSRAM NOT Found");
+    camera_config.frame_size = FRAMESIZE_HVGA;
+    camera_config.fb_location = CAMERA_FB_IN_DRAM;
+  }
+
+  // OLED I2C
   Wire.begin(I2C_SDA, I2C_SCL);
 
   if (!oled_display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADRESS)) {
@@ -61,58 +79,9 @@ void setup() {
   
 
 
-  camera_config_t config;
-  config.ledc_channel = LEDC_CHANNEL_0;
-  config.ledc_timer = LEDC_TIMER_0;
-  config.pin_d0 = Y2_GPIO_NUM;
-  config.pin_d1 = Y3_GPIO_NUM;
-  config.pin_d2 = Y4_GPIO_NUM;
-  config.pin_d3 = Y5_GPIO_NUM;
-  config.pin_d4 = Y6_GPIO_NUM;
-  config.pin_d5 = Y7_GPIO_NUM;
-  config.pin_d6 = Y8_GPIO_NUM;
-  config.pin_d7 = Y9_GPIO_NUM;
-  config.pin_xclk = XCLK_GPIO_NUM;
-  config.pin_pclk = PCLK_GPIO_NUM;
-  config.pin_vsync = VSYNC_GPIO_NUM;
-  config.pin_href = HREF_GPIO_NUM;
-  config.pin_sccb_sda = SIOD_GPIO_NUM;
-  config.pin_sccb_scl = SIOC_GPIO_NUM;
-  config.pin_pwdn = PWDN_GPIO_NUM;
-  config.pin_reset = RESET_GPIO_NUM;
-  config.xclk_freq_hz = 20000000;
-  config.frame_size = FRAMESIZE_QVGA; // SVGA
-  config.pixel_format = PIXFORMAT_JPEG; // for streaming
-  config.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
-  config.fb_location = CAMERA_FB_IN_PSRAM;
-  config.jpeg_quality = 12;
-  config.fb_count = 1;
-
-  // FRAMESIZE_QVGA 320x240
-  // FRAMESIZE_VGA 640x480
-  // FRAMESIZE_SVGA 800x600
-  // FRAMESIZE_XGA 1024x768
-  // FRAMESIZE_UXGA 1600x1200
-  // FRAMESIZE_SXGA 1280x1024
-  
-  // if PSRAM IC present, init with UXGA resolution and higher JPEG quality
-  // for larger pre-allocated frame buffer.
-  if(psramFound()){
-    Serial.println("PSRAM Found: ");
-    Serial.println(ESP.getFreePsram());
-    config.frame_size = FRAMESIZE_UXGA;
-    config.jpeg_quality = 4;
-    config.fb_count = 1;
-    config.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
-  } else {
-    // Limit the frame size when PSRAM is not available
-    Serial.println("PSRAM NOT Found");
-    config.frame_size = FRAMESIZE_HVGA;
-    config.fb_location = CAMERA_FB_IN_DRAM;
-  }
 
   // camera init
-  esp_err_t err = esp_camera_init(&config);
+  esp_err_t err = esp_camera_init(&camera_config);
   if (err != ESP_OK) {
     Serial.printf("Camera init failed with error 0x%x", err);
     return;
@@ -146,8 +115,8 @@ void setup() {
 }
 
 void loop() {
-  Serial.printf("Free PSRAM: %d bytes\n", ESP.getFreePsram());
-  delay(50);
+  //Serial.printf("Free PSRAM: %d bytes\n", ESP.getFreePsram());
+  //delay(50);
   if(digitalRead(3) == LOW)
   {
     Serial.println("CWEL");

@@ -19,3 +19,6 @@
 //#define CAMERA_MODEL_ESP32S3_CAM_LCD
 
 #include "camera_pins.h"
+
+
+void setup_camera(camera_config_t &config);
