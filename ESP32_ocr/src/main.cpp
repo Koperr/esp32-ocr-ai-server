@@ -1,35 +1,17 @@
-#include "esp_camera.h"
 #include <WiFi.h>
 #include <esp_heap_caps.h>
 #include <ESPAsyncWebServer.h>
 
+#include "camera.h"
 #include "oled_display.h"
 
-// ===================
-// Select camera model
-// ===================
-//#define CAMERA_MODEL_WROVER_KIT // Has PSRAM
-//#define CAMERA_MODEL_ESP_EYE // Has PSRAM
-#define CAMERA_MODEL_ESP32S3_EYE // Has PSRAM
-//#define CAMERA_MODEL_M5STACK_PSRAM // Has PSRAM
-//#define CAMERA_MODEL_M5STACK_V2_PSRAM // M5Camera version B Has PSRAM
-//#define CAMERA_MODEL_M5STACK_WIDE // Has PSRAM
-//#define CAMERA_MODEL_M5STACK_ESP32CAM // No PSRAM
-//#define CAMERA_MODEL_M5STACK_UNITCAM // No PSRAM
-//#define CAMERA_MODEL_AI_THINKER // Has PSRAM
-//#define CAMERA_MODEL_TTGO_T_JOURNAL // No PSRAM
-// ** Espressif Internal Boards **
-//#define CAMERA_MODEL_ESP32_CAM_BOARD
-//#define CAMERA_MODEL_ESP32S2_CAM_BOARD
-//#define CAMERA_MODEL_ESP32S3_CAM_LCD
 
-#include "camera_pins.h"
 
 // ===========================
 // Enter your WiFi credentials
 // ===========================
-const char* ssid     = "speleo2";
-const char* password = "petzlcroll";
+const char* ssid     = "****";
+const char* password = "****";
 
 AsyncWebServer server(80); // Tworzenie serwera na porcie 80
 
@@ -37,6 +19,13 @@ AsyncWebServer server(80); // Tworzenie serwera na porcie 80
 
 void startCameraServer() {
   server.on("/jpg", HTTP_GET, [](AsyncWebServerRequest *request){
+
+    // Ta petla for jest po to, zeby przed GET zrobic kilka zdjec testowych zeby kamera sie ustabilizowala itp
+    for (int i = 0; i < 5; i++){
+      camera_fb_t *fb = esp_camera_fb_get();
+      esp_camera_fb_return(fb);
+    }
+
     camera_fb_t *fb = esp_camera_fb_get();
     if (!fb) {
         request->send(500, "text/plain", "Camera error");
@@ -58,7 +47,7 @@ void setup() {
   Serial.println();
 
 
-
+  // I2C
   Wire.begin(I2C_SDA, I2C_SCL);
 
   if (!oled_display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADRESS)) {
@@ -67,7 +56,7 @@ void setup() {
   setup_oled(1, SSD1306_WHITE, 0, 0);
 
 
-
+  // BUTTON
   pinMode(3, INPUT_PULLUP);
   
 

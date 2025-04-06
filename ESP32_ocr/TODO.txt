@@ -1,0 +1,3 @@
+- Organize code into separate files
+- Make some kind of buffer for text to move around on OLED display
+- Add some buttons to interact with esp/OLED
