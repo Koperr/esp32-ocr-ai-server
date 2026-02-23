@@ -9,7 +9,7 @@
 // ===========================
 // Enter your WiFi credentials
 // ===========================
-const char* ssid     = "speleo2";
+const char* ssid     = "***";
 const char* password = "***";
 
 AsyncWebServer server(80); // Tworzenie serwera na porcie 80
